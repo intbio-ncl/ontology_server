@@ -1,0 +1,14 @@
+services:
+  db:
+   image: language_server
+   environment:
+     SPARQL_UPDATE: "true"
+     DEFAULT_GRAPH: "http://www.sbol_language_server.com/default_graph"
+   volumes:
+     - language_server_volume:/data
+   ports:
+     - "8890:8890"
+
+volumes:
+ language_server_volume:
+    external: true
