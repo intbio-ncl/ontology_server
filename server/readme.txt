@@ -1,15 +1,22 @@
+Process for the server going from nothing to running with graphs loaded. (Manual)
 
-1. Need to create a Volume at home.
-	1.1. 
-Start the server:
-sudo /usr/local/bin/docker-compose up (Optional -d for detached mode, background)
-sudo docker exec -it server_db_1 /bin/bash
+1. sudo /usr/local/bin/docker-compose up							(Launch the server)
+2. sudo docker cp ontologies/ 794e1609b99e:/data						(Copies the locally stored ontologies to the docker volume)
+3. sudo docker exec -it server_db_1 /bin/bash							(Runs the command /bin/bash in the container server_db_1)
+4. isql-v -U dba										(Launches isql)
+5  DB.DBA.RDF_LOAD_RDFXML_MT (file_to_string_output ('ontology_file.xml'), '', '<graph_iri>');	(Load the graphs)
+6. sparql select *
+	  from <http://example.com>
+	  where {?s ?p ?o};									(Test the graph is loaded)
 
-sudo docker cp test.tst 794e1609b99e:/data
+7. SPARQL
+   SELECT DISTINCT ?g 
+   WHERE { GRAPH ?g {?s a ?t}}									(Return all graph names)
 
 
-isql-v -U dba -P $DBA_PASSWORD
-SQL> ld_dir('dumps', '*.nq', 'http://foo.bar');
-SQL> rdf_loader_run();
-select * from DB.DBA.load_list;
 
+
+
+
+Misc Commands
+1. SPARQL CLEAR GRAPH <graph_iri>;								(Deletes graph, need <>)

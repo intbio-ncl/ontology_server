@@ -3,14 +3,11 @@
    xmlns:ns1="http://www.language_server.com/external_ontologies/"
    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 >
-  <rdf:Description rdf:about="http://www.language_server.com/external_ontologies#EDAM">
-    <ns1:download_url rdf:resource="http://edamontology.org/EDAM.owl"/>
-  </rdf:Description>
   <rdf:Description rdf:about="http://www.language_server.com/external_ontologies#chebi_lite">
     <ns1:download_url rdf:resource="http://ftp.ebi.ac.uk/pub/databases/chebi/ontology/chebi_lite.owl"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://www.language_server.com/external_ontologies#go">
-    <ns1:download_url rdf:resource="http://purl.obolibrary.org/obo/go.owl"/>
+  <rdf:Description rdf:about="http://www.language_server.com/external_ontologies#so">
+    <ns1:download_url rdf:resource="https://raw.githubusercontent.com/The-Sequence-Ontology/SO-Ontologies/master/Ontology_Files/so.owl"/>
   </rdf:Description>
   <rdf:Description rdf:about="http://www.language_server.com/external_ontologies#biopax-level3">
     <ns1:download_url rdf:resource="https://raw.githubusercontent.com/BioPAX/specification/master/Level3/specification/biopax-level3.owl"/>
@@ -18,7 +15,10 @@
   <rdf:Description rdf:about="http://www.language_server.com/external_ontologies#SBO_OWL">
     <ns1:download_url rdf:resource="http://www.ebi.ac.uk/sbo/exports/Main/SBO_OWL.owl"/>
   </rdf:Description>
-  <rdf:Description rdf:about="http://www.language_server.com/external_ontologies#so">
-    <ns1:download_url rdf:resource="https://raw.githubusercontent.com/The-Sequence-Ontology/SO-Ontologies/master/Ontology_Files/so.owl"/>
+  <rdf:Description rdf:about="http://www.language_server.com/external_ontologies#EDAM">
+    <ns1:download_url rdf:resource="http://edamontology.org/EDAM.owl"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://www.language_server.com/external_ontologies#go">
+    <ns1:download_url rdf:resource="http://purl.obolibrary.org/obo/go.owl"/>
   </rdf:Description>
 </rdf:RDF>

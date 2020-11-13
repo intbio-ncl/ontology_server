@@ -3,6 +3,7 @@ import os
 import rdflib
 import atexit
 from owlready2 import get_ontology
+from SPARQLWrapper import SPARQLWrapper
 
 default_ontologies = [
     "https://raw.githubusercontent.com/The-Sequence-Ontology/SO-Ontologies/master/Ontology_Files/so.owl",
@@ -19,6 +20,8 @@ download_predicate = rdflib.URIRef("http://www.language_server.com/external_onto
 graph_store = os.path.join(os.path.dirname(os.path.realpath(__file__)),"graph_store")
 download_dir = os.path.join(graph_store,"ontologies")
 ontology_graph = os.path.join(graph_store,"ontologies.xml")
+base_server_uri = "http://localhost:8890/sparql"
+
 
 class LanguageServer:
     def __init__(self):
@@ -32,11 +35,23 @@ class LanguageServer:
         for s,p,o in self.ontology_graph.triples(pattern):
             o = OntologyResource(o)
             self.ontologies[os.path.basename(s)] = o
-
+        
+        self.sparql = SPARQLWrapper(base_server_uri)
         atexit.register(self._save_ontology_graph)
 
-    def query(self,query):
-        pass
+    def select(self,query):
+        results = []
+        # Need to mediate to the correct ontology.
+        query_string = self.ontologies[default_ontologies[0]].build_query()
+        sparql.setQuery(query_string)
+        try :
+            ret = sparql.queryAndConvert()
+            print(ret)
+        except Exception as e:
+            print(e)
+            pass
+
+        return results
         
     def add_ontology(self,ontology):
         self._add_to_ontology_graph(ontology)
@@ -71,10 +86,12 @@ class OntologyResource:
                              os.path.basename(self.download_uri).split(".")[0] + ".xml")
         if not os.path.isfile(self.file_location):
             self.download()
+        
+        sparql = SPARQLWrapper("http://example.org/sparql")
     
-    def query(self):
-        pass
-
+    def build_query(self):
+        query_string = "SELECT * WHERE { ?s ?p ?o. }"
+        return query_string
 
     def download(self):
         r = requests.get(self.download_uri)
