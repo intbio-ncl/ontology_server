@@ -20,3 +20,15 @@ Process for the server going from nothing to running with graphs loaded. (Manual
 
 Misc Commands
 1. SPARQL CLEAR GRAPH <graph_iri>;								(Deletes graph, need <>)
+
+
+
+
+Specific Commands
+
+DB.DBA.RDF_LOAD_RDFXML_MT (file_to_string_output ('ontologies/EDAM.xml'), '', 'http://language_server/EDAM/');
+DB.DBA.RDF_LOAD_RDFXML_MT (file_to_string_output ('ontologies/SBO_OWL.xml'), '', 'http://language_server/SBO/');
+DB.DBA.RDF_LOAD_RDFXML_MT (file_to_string_output ('ontologies/biopax-level3.xml'), '', 'http://language_server/biopax-level3/');
+DB.DBA.RDF_LOAD_RDFXML_MT (file_to_string_output ('ontologies/chebi_lite.xml'), '', 'http://language_server/CHEBI/');
+DB.DBA.RDF_LOAD_RDFXML_MT (file_to_string_output ('ontologies/go.xml'), '', 'http://language_server/GO/');
+DB.DBA.RDF_LOAD_RDFXML_MT (file_to_string_output ('ontologies/so.xml'), '', 'http://language_server/SO/');
