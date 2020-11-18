@@ -7,7 +7,7 @@ from aenum import Enum,extend_enum
 from owlready2 import get_ontology
 from SPARQLWrapper import SPARQLWrapper,JSON
 
-external_ontologies_ns = "http://language_server/ontology#"
+external_ontologies_ns = "http://language_server/"
 ontology_object = rdflib.URIRef("http://language_server/Ontology")
 download_predicate = rdflib.URIRef("http://language_server/downloadUrl")
 query_code_predicate = rdflib.URIRef("http://language_server/queryCode")
@@ -33,7 +33,7 @@ class LanguageServer:
         # Need to mediate to the correct ontology.
         ontology_resources = self._get_ontology_resources(query,ontology_name,query_code)
         for ontology_resource in ontology_resources:
-            query_string = ontology_resource.build_query(query)
+            query_string = ontology_resource.build_select(query)
             result = self._run_query(query_string)
             print(result)
         return results
@@ -44,7 +44,6 @@ class LanguageServer:
         '''
         return None 
     
-
     def add_ontology(self,download_uri,query_code=None,name=None):
         if query_code is None:
             query_code = self.split(download_uri)[-1].split(".")[0]
@@ -125,6 +124,7 @@ class LanguageServer:
 class OntologyResource:
     def __init__(self,query_code,download_uri):
         self.query_code = query_code
+        self.server_uri = external_ontologies_ns + query_code + "/"
         self.download_uri = download_uri
         if not os.path.exists(download_dir):
             os.makedirs(download_dir)
@@ -133,11 +133,14 @@ class OntologyResource:
         if not os.path.isfile(self.file_location):
             self.download()
             
-    def build_query(self,pattern):
-        print(pattern)
-        raise NotImplementedError("Youll have to rebuild the graph uri.")
-        print(self.query_code)
-        query_string = "SELECT * FROM  WHERE { ?s ?p ?o. }"
+    def build_select(self,pattern):
+        s = f'<{pattern[0]}>' if pattern[0] is not None else "?s"
+        p = f'<{pattern[1]}>' if pattern[1] is not None else "?p"
+        o = f'<{pattern[2]}>' if pattern[2] is not None else "?o"
+        select = "?s ?p ?o"
+        where = f'{{{s} {p} {o}}}'
+        query_string = f"SELECT {select} FROM <{self.server_uri}>  WHERE {where}"
+        print(query_string)
         return query_string
 
     def download(self):
