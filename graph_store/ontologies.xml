@@ -3,34 +3,40 @@
    xmlns:ns1="http://language_server/"
    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 >
+  <rdf:Description rdf:about="http://language_server/SO">
+    <ns1:queryCode>SO</ns1:queryCode>
+    <ns1:downloadUrl rdf:resource="https://raw.githubusercontent.com/The-Sequence-Ontology/SO-Ontologies/master/Ontology_Files/so.owl"/>
+    <rdf:type rdf:resource="http://language_server/Ontology"/>
+    <ns1:namespace rdf:resource="http://purl.obolibrary.org/obo/"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://language_server/GO">
+    <ns1:namespace rdf:resource="http://purl.obolibrary.org/obo/"/>
+    <ns1:queryCode>GO</ns1:queryCode>
+    <ns1:downloadUrl rdf:resource="http://purl.obolibrary.org/obo/go.owl"/>
+    <rdf:type rdf:resource="http://language_server/Ontology"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://language_server/CHEBI">
+    <ns1:namespace rdf:resource="http://purl.obolibrary.org/obo/"/>
+    <ns1:queryCode>CHEBI</ns1:queryCode>
+    <rdf:type rdf:resource="http://language_server/Ontology"/>
+    <ns1:downloadUrl rdf:resource="http://ftp.ebi.ac.uk/pub/databases/chebi/ontology/chebi_lite.owl"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://language_server/biopax_level3">
+    <ns1:queryCode>biopax-level3</ns1:queryCode>
+    <ns1:namespace rdf:resource="http://www.biopax.org/release/biopax-level3.owl"/>
+    <rdf:type rdf:resource="http://language_server/Ontology"/>
+    <ns1:downloadUrl rdf:resource="https://raw.githubusercontent.com/BioPAX/specification/master/Level3/specification/biopax-level3.owl"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://language_server/SBO">
+    <ns1:downloadUrl rdf:resource="http://www.ebi.ac.uk/sbo/exports/Main/SBO_OWL.owl"/>
+    <ns1:namespace rdf:resource="http://biomodels.net/SBO/"/>
+    <ns1:queryCode>SBO</ns1:queryCode>
+    <rdf:type rdf:resource="http://language_server/Ontology"/>
+  </rdf:Description>
   <rdf:Description rdf:about="http://language_server/EDAM">
     <rdf:type rdf:resource="http://language_server/Ontology"/>
     <ns1:queryCode>EDAM</ns1:queryCode>
     <ns1:downloadUrl rdf:resource="http://edamontology.org/EDAM.owl"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://language_server/biopax_level3">
-    <ns1:downloadUrl rdf:resource="https://raw.githubusercontent.com/BioPAX/specification/master/Level3/specification/biopax-level3.owl"/>
-    <ns1:queryCode>biopax-level3.owl</ns1:queryCode>
-    <rdf:type rdf:resource="http://language_server/Ontology"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://language_server/CHEBI">
-    <rdf:type rdf:resource="http://language_server/Ontology"/>
-    <ns1:queryCode>CHEBI</ns1:queryCode>
-    <ns1:downloadUrl rdf:resource="http://ftp.ebi.ac.uk/pub/databases/chebi/ontology/chebi_lite.owl"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://language_server/SO">
-    <ns1:downloadUrl rdf:resource="https://raw.githubusercontent.com/The-Sequence-Ontology/SO-Ontologies/master/Ontology_Files/so.owl"/>
-    <ns1:queryCode>SO</ns1:queryCode>
-    <rdf:type rdf:resource="http://language_server/Ontology"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://language_server/SBO">
-    <ns1:downloadUrl rdf:resource="http://www.ebi.ac.uk/sbo/exports/Main/SBO_OWL.owl"/>
-    <ns1:queryCode>SBO</ns1:queryCode>
-    <rdf:type rdf:resource="http://language_server/Ontology"/>
-  </rdf:Description>
-  <rdf:Description rdf:about="http://language_server/GO">
-    <ns1:queryCode>GO</ns1:queryCode>
-    <ns1:downloadUrl rdf:resource="http://purl.obolibrary.org/obo/go.owl"/>
-    <rdf:type rdf:resource="http://language_server/Ontology"/>
+    <ns1:namespace rdf:resource="http://edamontology.org"/>
   </rdf:Description>
 </rdf:RDF>

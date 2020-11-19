@@ -6,19 +6,17 @@ import atexit
 from aenum import Enum,extend_enum
 from owlready2 import get_ontology
 from SPARQLWrapper import SPARQLWrapper,JSON
+from difflib import SequenceMatcher
+from .language_server_identifiers import ls_identifiers
 
-external_ontologies_ns = "http://language_server/"
-ontology_object = rdflib.URIRef("http://language_server/Ontology")
-download_predicate = rdflib.URIRef("http://language_server/downloadUrl")
-query_code_predicate = rdflib.URIRef("http://language_server/queryCode")
 graph_store = os.path.join(os.path.dirname(os.path.realpath(__file__)),"graph_store")
 download_dir = os.path.join(graph_store,"ontologies")
 ontology_graph = os.path.join(graph_store,"ontologies.xml")
 base_server_uri = "http://localhost:8890/sparql"
-rdf_type = rdflib.RDF.type
 
 class LanguageServer:
     def __init__(self):
+        self.sparql = SPARQLWrapper(base_server_uri)
         if not os.path.isfile(ontology_graph):
             self.ontology_graph = self.generate_new_ontology_graph()
         else:
@@ -26,16 +24,18 @@ class LanguageServer:
             self.ontology_graph.load(ontology_graph)
         atexit.register(self._save_ontology_graph)
         self._populate_enum()
-        self.sparql = SPARQLWrapper(base_server_uri)
+        
 
-    def select(self,query,ontology_name = None ,query_code = None):
+    def select(self,query,ontology_name = None ,query_code = None,limit=None):
         results = []
         # Need to mediate to the correct ontology.
         ontology_resources = self._get_ontology_resources(query,ontology_name,query_code)
         for ontology_resource in ontology_resources:
             query_string = ontology_resource.build_select(query)
+            if limit is not None:
+                query_string = f'{query_string} LIMIT {str(limit)}'
             result = self._run_query(query_string)
-            print(result)
+            results = results + result["results"]["bindings"]
         return results
 
     def construct(self,query):
@@ -55,10 +55,23 @@ class LanguageServer:
     def generate_new_ontology_graph(self):
         g = rdflib.Graph()
         for ontology in OntologyEnum:            
-            s = rdflib.URIRef(external_ontologies_ns + ontology.name)
-            g.add((s,rdf_type,ontology_object))
-            g.add((s,download_predicate,rdflib.URIRef(ontology.value.download_uri)))
-            g.add((s,query_code_predicate,rdflib.Literal(ontology.value.query_code)))
+            s = rdflib.URIRef(ls_identifiers.namespace + ontology.name)
+            g.add((s,ls_identifiers.predicate_rdf_type,ls_identifiers.object_ontology))
+            g.add((s,ls_identifiers.predicate_download,rdflib.URIRef(ontology.value.download_uri)))
+            g.add((s,ls_identifiers.predicate_query,rdflib.Literal(ontology.value.query_code)))
+
+            # Add The URI's
+            ontology_qry = (None,ls_identifiers.predicate_rdf_type,ls_identifiers.object_owl + "Ontology")
+            ontology_uri = self.select(ontology_qry,ontology_name=ontology.name,limit=None)[0]["s"]["value"]
+            classes_qry = (None,ls_identifiers.predicate_rdf_type,ls_identifiers.object_owl + "Class")
+            classes = self.select(classes_qry,ontology_name=ontology.name,limit=10)
+            common_prefix = ""
+            for c in classes:
+                c = c["s"]["value"]
+                cpx = os.path.commonprefix([ontology_uri,c])
+                if len(cpx) > len(common_prefix):
+                    common_prefix = cpx
+            g.add((s,ls_identifiers.predicate_namespace,rdflib.URIRef(common_prefix)))
         return g
 
     def get_name(self,subject):
@@ -70,7 +83,7 @@ class LanguageServer:
 
     def split(self,uri):
         return re.split('#|\/|:', uri)
-    
+     
     def _run_query(self,query_string):
         self.sparql.setQuery(query_string)
         self.sparql.setReturnFormat(JSON)
@@ -95,13 +108,13 @@ class LanguageServer:
         return ontology_resources
 
     def _populate_enum(self):
-        for ontology in self.ontology_graph.triples((None,rdf_type,ontology_object)):
+        for ontology in self.ontology_graph.triples((None,ls_identifiers.predicate_rdf_type,ls_identifiers.object_ontology)):
             name = self.get_name(ontology[0])
             if name in [e.name for e in OntologyEnum]:
                 continue
             try:
-                download_uri = next(self.ontology_graph.triples((ontology[0],download_predicate,None)))[2]
-                query_code = next(self.ontology_graph.triples((ontology[0],query_code_predicate,None)))[2]
+                download_uri = next(self.ontology_graph.triples((ontology[0],ls_identifiers.predicate_download,None)))[2]
+                query_code = next(self.ontology_graph.triples((ontology[0],ls_identifiers.predicate_query,None)))[2]
             except StopIteration:
                 raise ValueError(f'Graph object: {ontology[0]} is not correctly formed.')
             o = OntologyResource(query_code,download_uri)
@@ -111,20 +124,20 @@ class LanguageServer:
         if not os.path.exists(graph_store):
             os.makedirs(graph_store)
         for ontology in OntologyEnum:
-            s = rdflib.URIRef(external_ontologies_ns + ontology.name)
+            s = rdflib.URIRef(ls_identifiers.namespace + ontology.name)
             try:
                 next(self.ontology_graph.triples((s,None,None)))
             except StopIteration:
-                self.ontology_graph.add((s,rdf_type,ontology_object))
-                self.ontology_graph.add((s,download_predicate,rdflib.URIRef(ontology.value.download_uri)))
-                self.ontology_graph.add((s,query_code_predicate,rdflib.URIRef(ontology.value.query_code)))
+                self.ontology_graph.add((s,ls_identifiers.predicate_rdf_type,ls_identifiers.object_ontology))
+                self.ontology_graph.add((s,ls_identifiers.predicate_download,rdflib.URIRef(ontology.value.download_uri)))
+                self.ontology_graph.add((s,ls_identifiers.predicate_query,rdflib.URIRef(ontology.value.query_code)))
         return self.ontology_graph.serialize(destination=ontology_graph, format="xml")
 
 
 class OntologyResource:
     def __init__(self,query_code,download_uri):
         self.query_code = query_code
-        self.server_uri = external_ontologies_ns + query_code + "/"
+        self.server_uri = ls_identifiers.namespace + query_code + "/"
         self.download_uri = download_uri
         if not os.path.exists(download_dir):
             os.makedirs(download_dir)
@@ -140,7 +153,6 @@ class OntologyResource:
         select = "?s ?p ?o"
         where = f'{{{s} {p} {o}}}'
         query_string = f"SELECT {select} FROM <{self.server_uri}>  WHERE {where}"
-        print(query_string)
         return query_string
 
     def download(self):
@@ -157,7 +169,7 @@ class OntologyResource:
 
 class OntologyEnum(Enum):
     SO = OntologyResource("SO","https://raw.githubusercontent.com/The-Sequence-Ontology/SO-Ontologies/master/Ontology_Files/so.owl")
-    biopax_level3 = OntologyResource("biopax-level3.owl","https://raw.githubusercontent.com/BioPAX/specification/master/Level3/specification/biopax-level3.owl")
+    biopax_level3 = OntologyResource("biopax-level3","https://raw.githubusercontent.com/BioPAX/specification/master/Level3/specification/biopax-level3.owl")
     SBO = OntologyResource("SBO","http://www.ebi.ac.uk/sbo/exports/Main/SBO_OWL.owl")
     EDAM = OntologyResource("EDAM","http://edamontology.org/EDAM.owl")
     CHEBI =  OntologyResource("CHEBI","http://ftp.ebi.ac.uk/pub/databases/chebi/ontology/chebi_lite.owl")
@@ -170,7 +182,6 @@ class OntologyEnum(Enum):
             if enum.value.query_code == code:
                 matches.append(enum.value)
         return matches
-
 
 if __name__ == "__main__":
     server = LanguageServer()
