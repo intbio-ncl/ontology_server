@@ -11,5 +11,4 @@ class LSIdentifiers:
 
         self.object_ontology = rdflib.URIRef("http://language_server/Ontology")
         self.object_owl = rdflib.OWL
-
 ls_identifiers = LSIdentifiers()

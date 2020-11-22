@@ -55,7 +55,7 @@ class LanguageServer:
     def generate_new_ontology_graph(self):
         g = rdflib.Graph()
         for ontology in OntologyEnum:            
-            s = rdflib.URIRef(ls_identifiers.namespace + ontology.name)
+            s = rdflib.URIRef(ls_identifiers.namespace + ontology.value.query_code)
             g.add((s,ls_identifiers.predicate_rdf_type,ls_identifiers.object_ontology))
             g.add((s,ls_identifiers.predicate_download,rdflib.URIRef(ontology.value.download_uri)))
             g.add((s,ls_identifiers.predicate_query,rdflib.Literal(ontology.value.query_code)))
@@ -82,7 +82,7 @@ class LanguageServer:
             return split_subject[-1]
 
     def split(self,uri):
-        return re.split('#|\/|:', uri)
+        return re.split('#|\/|:', str(uri))
      
     def _run_query(self,query_string):
         self.sparql.setQuery(query_string)
@@ -110,7 +110,7 @@ class LanguageServer:
     def _populate_enum(self):
         for ontology in self.ontology_graph.triples((None,ls_identifiers.predicate_rdf_type,ls_identifiers.object_ontology)):
             name = self.get_name(ontology[0])
-            if name in [e.name for e in OntologyEnum]:
+            if name in [e.value.query_code for e in OntologyEnum]:
                 continue
             try:
                 download_uri = next(self.ontology_graph.triples((ontology[0],ls_identifiers.predicate_download,None)))[2]
@@ -124,7 +124,7 @@ class LanguageServer:
         if not os.path.exists(graph_store):
             os.makedirs(graph_store)
         for ontology in OntologyEnum:
-            s = rdflib.URIRef(ls_identifiers.namespace + ontology.name)
+            s = rdflib.URIRef(ls_identifiers.namespace + ontology.value.query_code)
             try:
                 next(self.ontology_graph.triples((s,None,None)))
             except StopIteration:
@@ -147,9 +147,9 @@ class OntologyResource:
             self.download()
             
     def build_select(self,pattern):
-        s = f'<{pattern[0]}>' if pattern[0] is not None else "?s"
-        p = f'<{pattern[1]}>' if pattern[1] is not None else "?p"
-        o = f'<{pattern[2]}>' if pattern[2] is not None else "?o"
+        s = f'<{str(pattern[0])}>' if pattern[0] is not None else "?s"
+        p = f'<{str(pattern[1])}>' if pattern[1] is not None else "?p"
+        o = f'<{str(pattern[2])}>' if pattern[2] is not None else "?o"
         select = "?s ?p ?o"
         where = f'{{{s} {p} {o}}}'
         query_string = f"SELECT {select} FROM <{self.server_uri}>  WHERE {where}"
@@ -169,7 +169,7 @@ class OntologyResource:
 
 class OntologyEnum(Enum):
     SO = OntologyResource("SO","https://raw.githubusercontent.com/The-Sequence-Ontology/SO-Ontologies/master/Ontology_Files/so.owl")
-    biopax_level3 = OntologyResource("biopax-level3","https://raw.githubusercontent.com/BioPAX/specification/master/Level3/specification/biopax-level3.owl")
+    biopax_level3 = OntologyResource("biopax-level3.owl","https://raw.githubusercontent.com/BioPAX/specification/master/Level3/specification/biopax-level3.owl")
     SBO = OntologyResource("SBO","http://www.ebi.ac.uk/sbo/exports/Main/SBO_OWL.owl")
     EDAM = OntologyResource("EDAM","http://edamontology.org/EDAM.owl")
     CHEBI =  OntologyResource("CHEBI","http://ftp.ebi.ac.uk/pub/databases/chebi/ontology/chebi_lite.owl")
