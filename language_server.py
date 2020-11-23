@@ -26,12 +26,12 @@ class LanguageServer:
         self._populate_enum()
         
 
-    def select(self,query,ontology_name = None ,query_code = None,limit=None):
+    def select(self,query,ontology_name = None ,query_code = None,limit=None,filters=[]):
         results = []
         # Need to mediate to the correct ontology.
         ontology_resources = self._get_ontology_resources(query,ontology_name,query_code)
         for ontology_resource in ontology_resources:
-            query_string = ontology_resource.build_select(query)
+            query_string = ontology_resource.build_select(query,filters=filters)
             if limit is not None:
                 query_string = f'{query_string} LIMIT {str(limit)}'
             result = self._run_query(query_string)
@@ -84,6 +84,18 @@ class LanguageServer:
     def split(self,uri):
         return re.split('#|\/|:', str(uri))
      
+    def get_query_code(self,pattern):
+        for identifier in pattern:
+            if identifier is None:
+                continue
+            query_code = self.split(identifier)[-2]
+            if query_code in [o.value.query_code for o in OntologyEnum]:
+                return query_code
+        raise ValueError(f'{pattern} is not a valid query for this server.')
+
+    def get_all_query_codes(self):
+        return [e.value.query_code for e in OntologyEnum]
+
     def _run_query(self,query_string):
         self.sparql.setQuery(query_string)
         self.sparql.setReturnFormat(JSON)
@@ -134,6 +146,32 @@ class LanguageServer:
         return self.ontology_graph.serialize(destination=ontology_graph, format="xml")
 
 
+
+class PreparedQuery:
+    def __init__(self,SELECT=None,FROM=None,WHERE=None):
+        self._select = SELECT
+        self._from = FROM
+        self._where = WHERE
+        self._filters = []
+    
+    def build(self):
+        qry_str = ""
+        if self._select is not None:
+            qry_str = f'SELECT {self._select}'
+        if self._from is not None:
+            qry_str = qry_str + f' FROM <{self._from}>'
+        if self._where is not None:
+            qry_str = qry_str + f' WHERE {{ {self._where}' 
+
+        for _filter in self._filters:
+            qry_str = qry_str + f' FILTER {_filter}'
+        qry_str = qry_str + "}"  
+        return qry_str
+    
+    def add_filter(self,filter_str):
+        self._filters.append(filter_str)
+
+
 class OntologyResource:
     def __init__(self,query_code,download_uri):
         self.query_code = query_code
@@ -146,13 +184,17 @@ class OntologyResource:
         if not os.path.isfile(self.file_location):
             self.download()
             
-    def build_select(self,pattern):
+    def build_select(self,pattern,filters=[]):
         s = f'<{str(pattern[0])}>' if pattern[0] is not None else "?s"
         p = f'<{str(pattern[1])}>' if pattern[1] is not None else "?p"
         o = f'<{str(pattern[2])}>' if pattern[2] is not None else "?o"
-        select = "?s ?p ?o"
-        where = f'{{{s} {p} {o}}}'
-        query_string = f"SELECT {select} FROM <{self.server_uri}>  WHERE {where}"
+        SELECT = "?s ?p ?o"
+        FROM = self.server_uri
+        WHERE = f'{s} {p} {o}'
+        query = PreparedQuery(SELECT,FROM,WHERE)
+        for _filter in filters:
+            query.add_filter(_filter)
+        query_string = query.build()
         return query_string
 
     def download(self):
