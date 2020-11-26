@@ -22,6 +22,7 @@ class LanguageServer:
         else:
             self.ontology_graph = rdflib.Graph()
             self.ontology_graph.load(ontology_graph)
+            self.prepared_queries = PreparedQuery
         atexit.register(self._save_ontology_graph)
         self._populate_enum()
         
@@ -171,6 +172,10 @@ class PreparedQuery:
     def add_filter(self,filter_str):
         self._filters.append(filter_str)
 
+    @classmethod
+    def create_contains_filter(self,identifier_pos,string):
+        return f'contains(lcase(str(?{identifier_pos})),"{string}")'
+
 
 class OntologyResource:
     def __init__(self,query_code,download_uri):
@@ -224,7 +229,4 @@ class OntologyEnum(Enum):
             if enum.value.query_code == code:
                 matches.append(enum.value)
         return matches
-
-if __name__ == "__main__":
-    server = LanguageServer()
 
