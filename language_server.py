@@ -22,7 +22,8 @@ class LanguageServer:
         else:
             self.ontology_graph = rdflib.Graph()
             self.ontology_graph.load(ontology_graph)
-            self.prepared_queries = PreparedQuery
+
+        self.prepared_queries = PreparedQuery
         atexit.register(self._save_ontology_graph)
         self._populate_enum()
         
@@ -72,6 +73,8 @@ class LanguageServer:
                 cpx = os.path.commonprefix([ontology_uri,c])
                 if len(cpx) > len(common_prefix):
                     common_prefix = cpx
+            if common_prefix[-1] in "#\/":
+                common_prefix = common_prefix[:-1]
             g.add((s,ls_identifiers.predicate_namespace,rdflib.URIRef(common_prefix)))
         return g
 
