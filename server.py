@@ -1,16 +1,18 @@
-import requests
 import os
 import re
-import rdflib
 import atexit
-from aenum import Enum,extend_enum
-from owlready2 import get_ontology
+from urllib.error import URLError
+import rdflib
+from aenum import extend_enum
 from SPARQLWrapper import SPARQLWrapper,JSON
-from difflib import SequenceMatcher
-from .language_server_identifiers import ls_identifiers
+
+from .utility.identifiers import ls_identifiers
+from .utility.ontology_enum import OntologyEnum
+from .utility.ontology_resource import OntologyResource
+from .utility.prepared_query import PreparedQuery
 
 graph_store = os.path.join(os.path.dirname(os.path.realpath(__file__)),"graph_store")
-download_dir = os.path.join(graph_store,"ontologies")
+
 ontology_graph = os.path.join(graph_store,"ontologies.xml")
 base_server_uri = "http://localhost:8890/sparql"
 
@@ -27,24 +29,17 @@ class LanguageServer:
         atexit.register(self._save_ontology_graph)
         self._populate_enum()
         
-
     def select(self,query,ontology_name = None ,query_code = None,limit=None,filters=[]):
         results = []
-        # Need to mediate to the correct ontology.
         ontology_resources = self._get_ontology_resources(query,ontology_name,query_code)
         for ontology_resource in ontology_resources:
             query_string = ontology_resource.build_select(query,filters=filters)
             if limit is not None:
                 query_string = f'{query_string} LIMIT {str(limit)}'
             result = self._run_query(query_string)
-            results = results + result["results"]["bindings"]
+            if result is not None:
+                results = results + result["results"]["bindings"]
         return results
-
-    def construct(self,query):
-        '''
-        Should we be using this instead??
-        '''
-        return None 
     
     def add_ontology(self,download_uri,query_code=None,name=None):
         if query_code is None:
@@ -101,11 +96,14 @@ class LanguageServer:
         return [e.value.query_code for e in OntologyEnum]
 
     def _run_query(self,query_string):
-        self.sparql.setQuery(query_string)
-        self.sparql.setReturnFormat(JSON)
-        ret = self.sparql.query()
-        ret = ret.convert()
-        return ret
+        try:
+            self.sparql.setQuery(query_string)
+            self.sparql.setReturnFormat(JSON)
+            ret = self.sparql.query()
+            ret = ret.convert()
+            return ret
+        except URLError:
+            return None
 
     def _get_ontology_resources(self,query,ontology_name,query_code):
         ontology_resources = []
@@ -151,85 +149,10 @@ class LanguageServer:
 
 
 
-class PreparedQuery:
-    def __init__(self,SELECT=None,FROM=None,WHERE=None):
-        self._select = SELECT
-        self._from = FROM
-        self._where = WHERE
-        self._filters = []
-    
-    def build(self):
-        qry_str = ""
-        if self._select is not None:
-            qry_str = f'SELECT {self._select}'
-        if self._from is not None:
-            qry_str = qry_str + f' FROM <{self._from}>'
-        if self._where is not None:
-            qry_str = qry_str + f' WHERE {{ {self._where}' 
-
-        for _filter in self._filters:
-            qry_str = qry_str + f' FILTER {_filter}'
-        qry_str = qry_str + "}"  
-        return qry_str
-    
-    def add_filter(self,filter_str):
-        self._filters.append(filter_str)
-
-    @classmethod
-    def create_contains_filter(self,identifier_pos,string):
-        return f'contains(lcase(str(?{identifier_pos})),"{string}")'
 
 
-class OntologyResource:
-    def __init__(self,query_code,download_uri):
-        self.query_code = query_code
-        self.server_uri = ls_identifiers.namespace + query_code + "/"
-        self.download_uri = download_uri
-        if not os.path.exists(download_dir):
-            os.makedirs(download_dir)
-        self.file_location = os.path.join(download_dir,
-                             os.path.basename(self.download_uri).split(".")[0] + ".xml")
-        if not os.path.isfile(self.file_location):
-            self.download()
-            
-    def build_select(self,pattern,filters=[]):
-        s = f'<{str(pattern[0])}>' if pattern[0] is not None else "?s"
-        p = f'<{str(pattern[1])}>' if pattern[1] is not None else "?p"
-        o = f'<{str(pattern[2])}>' if pattern[2] is not None else "?o"
-        SELECT = "?s ?p ?o"
-        FROM = self.server_uri
-        WHERE = f'{s} {p} {o}'
-        query = PreparedQuery(SELECT,FROM,WHERE)
-        for _filter in filters:
-            query.add_filter(_filter)
-        query_string = query.build()
-        return query_string
 
-    def download(self):
-        r = requests.get(self.download_uri)
-        r.raise_for_status()
-        output_fn = os.path.join(download_dir,os.path.basename(self.download_uri))
-        if os.path.isfile(output_fn):
-            os.remove(output_fn)
-        with open(output_fn,"a+") as f:
-            f.write(r.text)
-        onto = get_ontology(output_fn).load()
-        onto.save(file = self.file_location, format = "rdfxml")
-        os.remove(output_fn)
 
-class OntologyEnum(Enum):
-    SO = OntologyResource("SO","https://raw.githubusercontent.com/The-Sequence-Ontology/SO-Ontologies/master/Ontology_Files/so.owl")
-    biopax_level3 = OntologyResource("biopax-level3.owl","https://raw.githubusercontent.com/BioPAX/specification/master/Level3/specification/biopax-level3.owl")
-    SBO = OntologyResource("SBO","http://www.ebi.ac.uk/sbo/exports/Main/SBO_OWL.owl")
-    EDAM = OntologyResource("EDAM","http://edamontology.org/EDAM.owl")
-    CHEBI =  OntologyResource("CHEBI","http://ftp.ebi.ac.uk/pub/databases/chebi/ontology/chebi_lite.owl")
-    GO =  OntologyResource("GO","http://purl.obolibrary.org/obo/go.owl")
-     
-    @classmethod
-    def get_enum_by_code(cls, code):
-        matches = []
-        for enum in cls:
-            if enum.value.query_code == code:
-                matches.append(enum.value)
-        return matches
+
+
 
