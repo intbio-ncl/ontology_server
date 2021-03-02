@@ -9,9 +9,9 @@
 
 # Load Graphs
     isql-v -U dba
-    DB.DBA.RDF_LOAD_RDFXML_MT (file_to_string_output ('ontologies/EDAM.xml'), '', 'http://ontology_server/EDAM/');
-    DB.DBA.RDF_LOAD_RDFXML_MT (file_to_string_output ('ontologies/SBO_OWL.xml'), '', 'http://ontology_server/SBO/');
-    DB.DBA.RDF_LOAD_RDFXML_MT (file_to_string_output ('ontologies/biopax-level3.xml'), '', 'http://ontology_server/biopax-level3/');
-    DB.DBA.RDF_LOAD_RDFXML_MT (file_to_string_output ('ontologies/chebi_lite.xml'), '', 'http://ontology_server/CHEBI/');
-    DB.DBA.RDF_LOAD_RDFXML_MT (file_to_string_output ('ontologies/go.xml'), '', 'http://ontology_server/GO/');
-    DB.DBA.RDF_LOAD_RDFXML_MT (file_to_string_output ('ontologies/so.xml'), '', 'http://ontology_server/SO/');
+    DB.DBA.RDF_LOAD_RDFXML_MT (file_to_string_output ('ontologies/EDAM.owl'), '', 'http://ontology_server/EDAM');
+    DB.DBA.RDF_LOAD_RDFXML_MT (file_to_string_output ('ontologies/SBO_OWL.owl'), '', 'http://ontology_server/SBO');
+    DB.DBA.RDF_LOAD_RDFXML_MT (file_to_string_output ('ontologies/biopax-level3.owl'), '', 'http://ontology_server/biopax-level3');
+    DB.DBA.RDF_LOAD_RDFXML_MT (file_to_string_output ('ontologies/chebi_lite.owl'), '', 'http://ontology_server/CHEBI');
+    DB.DBA.RDF_LOAD_RDFXML_MT (file_to_string_output ('ontologies/go.owl'), '', 'http://ontology_server/GO');
+    DB.DBA.RDF_LOAD_RDFXML_MT (file_to_string_output ('ontologies/so.owl'), '', 'http://ontology_server/SO');
